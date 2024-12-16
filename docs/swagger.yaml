@@ -1,0 +1,362 @@
+definitions:
+  handler.AddOrderResponse:
+    properties:
+      message:
+        type: string
+      order_id:
+        type: integer
+      total_price:
+        type: number
+    type: object
+  handler.AddToCartRequest:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  handler.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  handler.Product:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: integer
+    type: object
+  handler.RegisterRequest:
+    properties:
+      email:
+        description: Email address
+        type: string
+      name:
+        description: Name of the user
+        type: string
+      password:
+        description: Password for the account
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+info:
+  contact: {}
+paths:
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all available products.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of products retrieved successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get All Products
+      tags:
+      - Products
+  /products/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a product's details by its ID.
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product retrieved successfully
+          schema:
+            $ref: '#/definitions/handler.Product'
+        "404":
+          description: Product not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Product by ID
+      tags:
+      - Products
+  /users/carts:
+    get:
+      consumes:
+      - application/json
+      description: Get all cart items belonging to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of cart items
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to retrieve cart data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve cart items for the logged-in user
+      tags:
+      - Carts
+    post:
+      consumes:
+      - application/json
+      description: Add a product to the cart for the authenticated user
+      parameters:
+      - description: Request body for adding a product to the cart
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddToCartRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Item added to cart
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to add to cart
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add an item to the user's cart
+      tags:
+      - Carts
+  /users/carts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a cart item based on the cart ID for the authenticated user
+      parameters:
+      - description: Cart ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item deleted from cart
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Cart item not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to delete item
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a specific item from the user's cart
+      tags:
+      - Carts
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user by providing valid credentials
+      parameters:
+      - description: User login data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authentication successful with a JWT token
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Invalid email or password
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login a user
+      tags:
+      - Users
+  /users/orders:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all orders for the logged-in user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of user orders
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get User Orders
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: Place a new order for the logged-in user. Cart items are processed,
+        and the cart is cleared after order creation.
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Order placed successfully
+          schema:
+            $ref: '#/definitions/handler.AddOrderResponse'
+        "400":
+          description: Bad Request - Cart is empty
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add a New Order
+      tags:
+      - Orders
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account by providing name, email, and password
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid input or email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Users
+swagger: "2.0"
